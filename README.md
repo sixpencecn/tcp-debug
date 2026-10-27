@@ -11,6 +11,8 @@
 
 启动器等价于 `node launch.js`：等服务就绪后自动打开 `http://localhost:8787`。
 
+> **便携分发**：本目录已内置 `node.exe`（Node 运行时，约 87MB）。把整个 `tcp-debug` 文件夹拷贝到任意 Windows 电脑，**双击 `启动.bat` 即可使用，无需在系统安装 Node**。该 `node.exe` 已在 `.gitignore` 中忽略，仅用于本地/离线分发，不进入 git 仓库。
+
 ### 方式二：手动启动
 
 ```bash

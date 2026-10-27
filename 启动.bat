@@ -1,8 +1,8 @@
 @echo off
 cd /d "%~dp0"
-where node >nul 2>nul
-if %errorlevel%==0 (
-  node launch.js
+REM 优先使用自带运行时 node.exe（无需在系统安装 Node）
+if exist "%~dp0node.exe" (
+  "%~dp0node.exe" launch.js
 ) else (
-  "C:/Users/杨飞/.workbuddy/binaries/node/versions/22.22.2-6/node.exe" launch.js
+  node launch.js
 )
