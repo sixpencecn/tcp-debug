@@ -4,6 +4,15 @@
 
 ## 运行
 
+### 方式一：双击启动器（推荐，桌面 App 体验）
+
+- Windows：双击 `启动.bat` → 自动拉起服务并打开浏览器，按 `Ctrl+C` 退出即关闭服务。
+- macOS / Linux：在终端执行 `./启动.sh`（需先 `chmod +x 启动.sh`）。
+
+启动器等价于 `node launch.js`：等服务就绪后自动打开 `http://localhost:8787`。
+
+### 方式二：手动启动
+
 ```bash
 cd tcp-debug
 node server.js            # 默认 http://localhost:8787
@@ -11,6 +20,19 @@ PORT=9000 node server.js # 自定义端口
 ```
 
 打开浏览器访问 `http://localhost:8787` 即可。
+
+### 打包为独立桌面 exe（Windows）
+
+本工具核心是一个 Node 服务 + 浏览器前端。若要打成单文件 `.exe` 双击运行，可用 `pkg` 或 `Electron`：
+
+```bash
+npm i -D pkg
+npx pkg launch.js --targets node22-win-x64 --output tcp-debug.exe
+# 或 Electron：将 public/ 作为渲染进程、server.js 作为主进程
+```
+
+> 注意：`pkg` / `Electron` 在打包时需要从 GitHub 下载 Node/Chromium 运行时。若所在网络对 `github.com` 发布物下载受限（如本环境代理 502），该步会失败——此时用上面的「启动器」方式即可，或换到可正常访问 GitHub 的机器打包。
+
 
 ## 功能
 
