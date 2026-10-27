@@ -6,13 +6,30 @@
 const { spawn } = require('child_process');
 const { platform } = require('os');
 const http = require('http');
+const path = require('path');
 
 const PORT = process.env.PORT || 8787;
 
-const srv = spawn(process.execPath, [require('path').join(__dirname, 'server.js')], {
-  env: Object.assign({}, process.env, { PORT: String(PORT) }),
-  stdio: 'inherit'
+// 启动前先检测服务是否已运行，避免重复拉起导致端口冲突
+http.get('http://127.0.0.1:' + PORT + '/api/state', function (r) {
+  r.resume();
+  console.log('TCP 调试助手已在运行 → http://localhost:' + PORT + '\n（直接打开浏览器即可，无需重复启动）\n');
+  openBrowser();
+  // 不拉起新服务端，仅作为“打开浏览器”的入口
+  process.stdin.resume(); // 保持窗口，便于用户 Ctrl+C 退出
+}).on('error', function () {
+  startServer();
 });
+
+function startServer() {
+  const srv = spawn(process.execPath, [path.join(__dirname, 'server.js')], {
+    env: Object.assign({}, process.env, { PORT: String(PORT) }),
+    stdio: 'inherit'
+  });
+  srv.on('exit', (code) => process.exit(code === null ? 0 : code));
+  process.on('SIGINT', () => { try { srv.kill(); } catch (e) {} process.exit(0); });
+  setTimeout(() => waitUp(0), 600);
+}
 
 function openBrowser() {
   const url = 'http://localhost:' + PORT;
@@ -45,8 +62,3 @@ function waitUp(attempt) {
     openBrowser();
   }).on('error', () => setTimeout(() => waitUp(attempt + 1), 300));
 }
-
-setTimeout(() => waitUp(0), 600);
-
-srv.on('exit', (code) => process.exit(code === null ? 0 : code));
-process.on('SIGINT', () => { try { srv.kill(); } catch (e) {} process.exit(0); });

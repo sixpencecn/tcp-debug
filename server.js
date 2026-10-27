@@ -253,6 +253,16 @@ const server = http.createServer(function (req, res) {
 
 function sseSend(res, obj) { res.write('data: ' + JSON.stringify(obj) + '\n\n'); }
 
+server.on('error', function (err) {
+  if (err.code === 'EADDRINUSE') {
+    console.error('✗ 端口 ' + PORT + ' 已被占用。\n' +
+      '  可能 TCP 调试助手已经在运行 —— 请直接打开浏览器访问 http://localhost:' + PORT + '\n' +
+      '  如需重启，请先关闭已运行的窗口 / 结束占用端口的 node 进程，再重新双击 启动.bat。');
+    process.exit(1);
+  }
+  console.error('✗ 服务启动失败: ' + err.message);
+  process.exit(1);
+});
 server.listen(PORT, function () {
   console.log('TCP 调试助手已启动: http://localhost:' + PORT);
 });
