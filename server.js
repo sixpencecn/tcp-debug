@@ -105,9 +105,12 @@ function clientSend(payload, mode, coding, nl) {
 
 // ---------------- 服务端模块 ----------------
 let serverInst = null;
-const serverClients = new Map(); // id -> socket
+const serverClients = new Map(); // id -> { sock, addr }
 let serverStatus = 'stopped';
 let clientSeq = 0;
+function clientDetail() {
+  return Array.from(serverClients, function (e) { return { id: e[0], addr: e[1].addr }; });
+}
 function setServerStatus(s, msg) {
   serverStatus = s;
   broadcast({ type: 'status', role: 'server', state: s, msg: msg || '', ts: Date.now() });
@@ -116,8 +119,8 @@ function serverStart(port) {
   if (serverInst) throw new Error('服务端已在运行');
   serverInst = net.createServer(function (sock) {
     const id = 'c' + (++clientSeq);
-    serverClients.set(id, sock);
-    const addr = sock.remoteAddress + ':' + sock.remotePort;
+    const addr = (sock.remoteAddress || '').replace(/^::ffff:/, '') + ':' + sock.remotePort;
+    serverClients.set(id, { sock: sock, addr: addr });
     broadcast({ type: 'server-client', action: 'connected', clientId: id, addr: addr, ts: Date.now() });
     log('info', '服务端收到连接 ' + id + ' (' + addr + ')');
     sock.on('data', function (d) {
@@ -137,25 +140,25 @@ function serverStart(port) {
 function serverStop() {
   if (!serverInst) return;
   try { serverInst.close(); } catch (e) {}
-  for (const s of serverClients.values()) { try { s.destroy(); } catch (e) {} }
+  for (const rec of serverClients.values()) { try { rec.sock.destroy(); } catch (e) {} }
   serverClients.clear();
   serverInst = null;
   setServerStatus('stopped', '');
 }
 function serverSend(clientId, payload, mode, coding, nl) {
-  const targets = clientId === 'all'
+  const recs = clientId === 'all'
     ? Array.from(serverClients.values())
     : (serverClients.has(clientId) ? [serverClients.get(clientId)] : []);
-  if (targets.length === 0) throw new Error('目标客户端不存在或未连接');
+  if (recs.length === 0) throw new Error('目标客户端不存在或未连接');
   const buf = buildSendBuf(payload, mode, coding, nl);
-  for (const s of targets) s.write(buf);
+  for (const rec of recs) rec.sock.write(buf);
   broadcast({ type: 'data', role: 'server', clientId: clientId, direction: 'send',
     hex: buf.toString('hex').toUpperCase(), text: decode(buf, coding), ts: Date.now() });
 }
 function serverDisconnectClient(clientId) {
-  const s = serverClients.get(clientId);
-  if (!s) throw new Error('客户端不存在');
-  try { s.destroy(); } catch (e) {}
+  const rec = serverClients.get(clientId);
+  if (!rec) throw new Error('客户端不存在');
+  try { rec.sock.destroy(); } catch (e) {}
   serverClients.delete(clientId);
   broadcast({ type: 'server-client', action: 'disconnected', clientId: clientId, ts: Date.now() });
 }
@@ -234,7 +237,7 @@ const server = http.createServer(function (req, res) {
     res.write('retry: 3000\n\n');
     sseClients.add(res);
     sseSend(res, { type: 'state', clientStatus: clientStatus, serverStatus: serverStatus,
-      clients: Array.from(serverClients.keys()), settings: settings });
+      clients: Array.from(serverClients.keys()), clientsDetail: clientDetail(), settings: settings });
     req.on('close', function () { sseClients.delete(res); });
     const ka = setInterval(function () { try { res.write(': ka\n\n'); } catch (e) {} }, 25000);
     req.on('close', function () { clearInterval(ka); });
@@ -242,7 +245,7 @@ const server = http.createServer(function (req, res) {
   }
   if (u === '/api/state') {
     return apiResp(res, 200, { clientStatus: clientStatus, serverStatus: serverStatus,
-      clients: Array.from(serverClients.keys()), settings: settings });
+      clients: Array.from(serverClients.keys()), clientsDetail: clientDetail(), settings: settings });
   }
   if (u.startsWith('/api/')) return handleApi(u, req, res);
   return serveStatic(u, res);

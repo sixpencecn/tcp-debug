@@ -44,7 +44,7 @@
     switch (ev.type) {
       case 'state':
         setClientStatus(ev.clientStatus); setServerStatus(ev.serverStatus);
-        renderClients(ev.clients || []);
+        renderClients(ev.clientsDetail || ev.clients || []);
         break;
       case 'status':
         if (ev.role === 'client') setClientStatus(ev.state, ev.msg);
@@ -83,14 +83,17 @@
 
   // ---------- 客户端列表 ----------
   function renderClients(list) {
+    // 兼容两种格式：[id] 或 [{id, addr}]
+    const items = (list || []).map((c) => (typeof c === 'string' ? { id: c, addr: '' } : c));
     const sel = $('s-clients');
     const cur = sel.value;
-    sel.innerHTML = '<option value="all">全部(广播)</option>' + list.map((id) => '<option value="' + id + '">' + id + '</option>').join('');
-    if (list.indexOf(cur) >= 0) sel.value = cur;
-    $('s-kick').disabled = list.length === 0;
+    sel.innerHTML = '<option value="all">全部(广播)</option>' +
+      items.map((it) => '<option value="' + it.id + '">' + it.id + (it.addr ? ' (' + it.addr + ')' : '') + '</option>').join('');
+    if (items.some((it) => it.id === cur)) sel.value = cur;
+    $('s-kick').disabled = items.length === 0;
   }
   function refreshClients() {
-    api('GET', '/api/state').then((j) => renderClients(j.clients || []));
+    api('GET', '/api/state').then((j) => renderClients(j.clientsDetail || j.clients || []));
   }
 
   // ---------- API ----------

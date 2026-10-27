@@ -32,6 +32,7 @@
         <button id="c-connect" class="btn primary">连接</button>
         <button id="c-disconnect" class="btn" disabled>断开</button>
       </div>
+      <div class="muted" style="font-size:12px">💡 只有客户端模式才会主动连接上面填的「主机:端口」；服务端模式只在本机监听、等人来连。</div>
     </section>
 
     <!-- ============ 服务端 ============ -->
@@ -46,6 +47,7 @@
         <select id="s-clients"><option value="all">全部(广播)</option></select>
         <button id="s-kick" class="btn warn" disabled>踢除</button>
       </div>
+      <div class="muted" style="font-size:12px">💡 服务端只监听本机端口，不会主动连别人的 IP。下方列表会显示每个客户端的来源地址——若显示 <b>127.0.0.1</b> 说明是你自己这台机器连进来的。</div>
     </section>
 
     <!-- ============ 日志 ============ -->
