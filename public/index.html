@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>TCP 调试助手</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">🔧 TCP 调试助手</div>
+    <div class="status">
+      <span id="st-client" class="pill off">客户端 离线</span>
+      <span id="st-server" class="pill off">服务端 未监听</span>
+      <span class="pill bytes">收 <b id="rx">0</b> / 发 <b id="tx">0</b> B</span>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="client">客户端模式</button>
+    <button class="tab" data-tab="server">服务端模式</button>
+  </nav>
+
+  <main>
+    <!-- ============ 客户端 ============ -->
+    <section id="panel-client" class="panel active">
+      <div class="row">
+        <label>主机</label>
+        <input id="c-host" value="127.0.0.1" placeholder="例如 127.0.0.1" />
+        <label>端口</label>
+        <input id="c-port" type="number" value="8080" style="width:110px" />
+        <button id="c-connect" class="btn primary">连接</button>
+        <button id="c-disconnect" class="btn" disabled>断开</button>
+      </div>
+    </section>
+
+    <!-- ============ 服务端 ============ -->
+    <section id="panel-server" class="panel">
+      <div class="row">
+        <label>监听端口</label>
+        <input id="s-port" type="number" value="8080" style="width:110px" />
+        <button id="s-start" class="btn primary">开始监听</button>
+        <button id="s-stop" class="btn" disabled>停止</button>
+        <span class="spacer"></span>
+        <label>已连客户端</label>
+        <select id="s-clients"><option value="all">全部(广播)</option></select>
+        <button id="s-kick" class="btn warn" disabled>踢除</button>
+      </div>
+    </section>
+
+    <!-- ============ 日志 ============ -->
+    <div class="logwrap">
+      <div class="logbar">
+        <span class="muted">通信日志</span>
+        <span class="spacer"></span>
+        <label class="mini"><input type="checkbox" id="autoscroll" checked /> 自动滚动</label>
+        <label class="mini"><input type="checkbox" id="showhex" /> 显示 HEX</label>
+        <button id="clear" class="btn tiny">清空</button>
+      </div>
+      <div id="log" class="log"></div>
+    </div>
+
+    <!-- ============ 发送区 ============ -->
+    <div class="sendbox">
+      <div class="row wrap">
+        <label>编码</label>
+        <select id="coding">
+          <option value="utf8">UTF-8</option>
+          <option value="gbk">GBK</option>
+          <option value="ascii">ASCII</option>
+          <option value="hex">HEX</option>
+        </select>
+        <label class="mini"><input type="checkbox" id="mode-hex" /> HEX 模式发送</label>
+        <label class="mini">换行
+          <select id="newline">
+            <option value="none">无</option>
+            <option value="crlf">CRLF (\r\n)</option>
+            <option value="lf">LF (\n)</option>
+            <option value="cr">CR (\r)</option>
+          </select>
+        </label>
+        <label class="mini"><input type="checkbox" id="repeat" /> 定时重发</label>
+        <input id="repeat-ms" type="number" value="1000" style="width:80px" title="重发间隔(ms)" />
+        <span class="muted">ms</span>
+      </div>
+      <div class="row">
+        <textarea id="payload" placeholder="输入要发送的内容…（HEX 模式用空格或 - 分隔，如 48 69 0A）"></textarea>
+      </div>
+      <div class="row">
+        <button id="send" class="btn primary">发送</button>
+        <span id="send-hint" class="muted"></span>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
